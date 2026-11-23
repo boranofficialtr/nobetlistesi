@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hemşire Nöbet Planlama</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f1f4f8;margin:0;padding:20px;color:#253247}
+h2{text-align:center;color:#183b62;margin-top:0}
+.panel{background:white;padding:15px;border-radius:10px;margin-bottom:15px;box-shadow:0 2px 8px #0001}
+button,input,select{padding:8px;border:1px solid #cbd5e1;border-radius:5px;font-size:14px}
+button{cursor:pointer;background:#245b91;color:white;border:0;margin:3px}
+button:hover{background:#17416c}
+button:disabled{opacity:.6;cursor:wait}
+.danger{background:#b83b42}
+.danger:hover{background:#8f2c32}
+.green{background:#23845b}
+.green:hover{background:#186846}
+.gold{background:#a9701c}
+.gold:hover{background:#82550f}
+.teal{background:#0f7b8a}
+.teal:hover{background:#0b5d69}
+.controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.controls+.controls{margin-top:10px}
+table{border-collapse:collapse;background:white;font-size:13px}
+th,td{border:1px solid #ccd5df;padding:2px;text-align:center;min-width:40px}
+th{background:#e8eef5;position:sticky;top:0;z-index:2;padding:4px}
+th.weekend{background:#2b3b50;color:white}
+.name{min-width:500px;position:sticky;left:0;background:#f8fafc;z-index:1;text-align:left;white-space:nowrap}
+th.name{z-index:3;background:#e8eef5}
+.name input{width:130px;text-align:left;font-weight:normal;border:1px solid #dbe2ea;background:white;padding:6px}
+.name .del{padding:4px 8px;margin:0 0 0 4px;background:#b83b42;font-size:12px}
+.name .ex{padding:4px 8px;margin:0 0 0 4px;background:#7a8aa0;font-size:12px}
+.name .ex.on{background:#a9701c}
+.name .wkb{padding:4px 8px;margin:0 0 0 4px;background:#7a8aa0;font-size:12px}
+.name .wkb.on{background:#23845b}
+.name .pvl{font-size:11px;color:#596b80;margin-left:6px}
+.name input.prev{width:46px;text-align:center;font-weight:bold;padding:6px 2px;margin-left:2px}
+.name input.prev:disabled{background:#e6eaef;opacity:.6}
+td.weekend{background:#34475e}
+td input{width:38px;text-align:center;border:0;background:transparent;padding:7px 0;font-weight:bold;color:#183b62}
+td.weekend input{color:white}
+td input:focus{outline:2px solid #3185d5;background:white;color:#183b62}
+td input.auto{background:#cfe3f7;color:#183b62}
+td input.off{background:#f6d5d7;color:#8f2c32}
+td.total{font-weight:bold;background:#f1f5f9;min-width:55px}
+tr.isextra td.name{background:#fbf1de}
+tr.iswk td.name{background:#e1f3e8}
+.tablewrap{overflow:auto;max-height:68vh;border-radius:7px}
+#docHeader{text-align:center;margin-bottom:12px;line-height:1.5}
+#docHeader .h1{font-size:20px;font-weight:bold;color:#183b62}
+#docHeader .h2{font-size:15px;font-weight:bold;color:#253247}
+#docHeader .h3{font-size:13px;color:#596b80}
+#docHeader .h4{font-size:14px;font-weight:bold;color:#183b62;margin-top:2px}
+#status{white-space:pre-line;padding:12px;border-radius:7px;background:#edf3f8;margin-top:12px;font-size:14px}
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.summary span{background:#e9eff6;padding:8px 10px;border-radius:6px;font-size:13px}
+.legend{font-size:12px;color:#596b80;line-height:1.7}
+.legend i{display:inline-block;width:14px;height:14px;vertical-align:middle;border-radius:3px;margin:0 3px 0 8px;border:1px solid #bbb}
+@media print{
+ @page{size:A4 landscape;margin:8mm}
+ body{padding:0;background:white}
+ .noprint{display:none!important}
+ .panel{box-shadow:none;padding:0}
+ .tablewrap{overflow:visible;max-height:none}
+ th{position:static}
+ .name{position:static;min-width:150px}
+ table{font-size:10px}
+ td input{font-size:10px}
+ *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style>
+</head>
+<body>
+
+<h2 class="noprint">HEMŞİRE NÖBET PLANLAMA PROGRAMI</h2>
+
+<div class="panel noprint">
+ <div class="controls">
+  <label>Hastane:
+   <input type="text" id="hospital" style="width:260px" placeholder="Hastane adı" oninput="updateHeader()">
+  </label>
+  <label>Servis:
+   <input type="text" id="service" style="width:220px" placeholder="Servis adı" oninput="updateHeader()">
+  </label>
+ </div>
+ <div class="controls">
+  <label>Ay:
+   <select id="month">
+    <option value="0">Ocak</option><option value="1">Şubat</option>
+    <option value="2">Mart</option><option value="3">Nisan</option>
+    <option value="4">Mayıs</option><option value="5">Haziran</option>
+    <option value="6">Temmuz</option><option value="7">Ağustos</option>
+    <option value="8">Eylül</option><option value="9">Ekim</option>
+    <option value="10" selected>Kasım</option><option value="11">Aralık</option>
+   </select>
+  </label>
+  <label>Yıl:
+   <input type="number" id="year" value="2026" style="width:85px">
+  </label>
+  <label title="Hafta içine denk gelen resmi tatil sayısı. Gereken süre bu kadar iş günü eksik hesaplanır.">Resmi tatil (hafta içi) gün:
+   <input type="number" id="holidays" value="0" min="0" max="31" style="width:65px" oninput="onReqChange()">
+  </label>
+  <label title="Her gün aynı anda görevde olması gereken hemşire sayısı (ne eksik ne fazla). Değiştirince ayın tüm günleri bu sayıya göre yeniden düzenlenir.">Günlük nöbetçi hemşire sayısı:
+   <input type="number" id="perDay" value="2" min="1" max="12" style="width:65px" onchange="onPerDayChange()">
+  </label>
+  <button onclick="changeMonth()">Ayı Göster</button>
+  <button class="green" onclick="addNurse()">+ Hemşire Ekle</button>
+ </div>
+</div>
+
+<div class="panel">
+ <div class="controls noprint">
+  <button class="green" id="btnGen" onclick="generate(false)">OLUŞTUR</button>
+  <button class="teal" id="btn24" onclick="generate(true)" title="Otomatik nöbetlerin hepsini 24 saat yazar. Yalnızca elle girilen 8/16 varsa onun tamamlayıcısı (16/8) yazılır. Toplam saatler olabildiğince eşitlenir.">24 SAATLİK OLUŞTUR</button>
+  <button onclick="saveData()">Kaydet</button>
+  <button onclick="loadData()">Yükle</button>
+  <button class="gold" onclick="saveAs()" title="Hastane, servis, hemşire listesi, ekstra işaretleri ve mesai çizelgesiyle birlikte bu programı yeni bir HTML dosyası olarak kaydeder">Farklı Kaydet (Masaüstü)</button>
+  <button onclick="exportExcel()">Excel İndir (.xlsx)</button>
+  <button onclick="window.print()">Yazdır</button>
+  <button class="danger" onclick="clearAuto()">Otomatik Olanları Sil</button>
+  <button class="danger" onclick="clearSchedule()">Hepsini Temizle</button>
+ </div>
+
+ <p class="legend noprint">
+  Hücrelere <b>8</b>, <b>16</b>, <b>24</b> veya <b>x</b> (o gün nöbet yazılmasın) girebilirsiniz.
+  Elle <b>16</b> girilen güne bir hemşireye <b>8</b>, elle <b>8</b> girilen güne bir hemşireye <b>16</b> otomatik eklenir.
+  <b>Ekstra</b> butonuna basılan kişi, ayın gereken mesai süresi kadar (fazla da eksik de olmadan) çalıştırılır.
+  <b>Hafta içi 8</b> butonuna basılan kişi yalnızca hafta içi günlerde 8 saat (mesai) çalışır; nöbet tutmaz.
+  Her gün, her zaman diliminde tam olarak <b>günlük nöbetçi sayısı</b> kadar kişi bulunur (ne eksik ne fazla); <b>24</b> gün ve geceyi, <b>8</b> yalnız gündüzü, <b>16</b> yalnız geceyi doldurur.
+  Hiçbir kişide, <b>x</b> günleri ve hafta sonları dahil, 4 günden uzun art arda boş gün kalmaz.
+  <b>Önceki ay boş</b> kutusuna, kişinin önceki ayın sonunda son nöbetinden bu yana kaç gün boş geçtiğini yazın (son gün nöbet tuttuysa <b>0</b>). Sistem ay başında toplam boşluğu en az 2, en fazla 4 gün olacak şekilde ayarlar: örneğin <b>3</b> yazılırsa ay başında en fazla 1 gün boş bırakılır ya da 1. günden başlatılır; <b>0</b> yazılırsa 2, 3 veya 4 gün boş bırakılır. Kutu boş bırakılırsa o kişi için ay başı kontrol edilmez. Bir sonraki aya geçerken bu değerler mevcut çizelgeden otomatik aktarılır.
+  <b>24 SAATLİK OLUŞTUR</b> butonu otomatik nöbetlerin hepsini <b>24</b> saat yazar; yalnızca elle girilmiş <b>8</b> veya <b>16</b> (ya da hafta içi 8 kişisi) varsa o günün eksik kalan dilimini <b>16</b> veya <b>8</b> ile tamamlar. Toplam saatler olabildiğince eşitlenir. <b>8</b> saatlik mesailer “Nöbet Sayısı”na dahil edilmez.
+  <i style="background:#34475e"></i>Hafta sonu
+  <i style="background:#cfe3f7"></i>Otomatik nöbet
+  <i style="background:#f6d5d7"></i>x (nöbet yok)
+  <i style="background:#fbf1de"></i>Ekstra kişi
+ </p>
+
+ <div id="docHeader">
+  <div class="h1" id="hHospital"></div>
+  <div class="h2" id="hService"></div>
+  <div class="h3" id="hMonth"></div>
+  <div class="h4" id="hReq"></div>
+ </div>
+
+ <div class="tablewrap">
+  <table id="schedule"></table>
+ </div>
+ <div class="summary noprint" id="summary"></div>
+ <div id="status" class="noprint">Hazır. Hemşireleri ekleyip OLUŞTUR butonuna basın.</div>
+</div>
+
+<script>
+// Sayfa ilk açıldığındaki hâli ("Farklı Kaydet" için kopya olarak saklanır)
+const ORIGINAL_HTML = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+// Farklı Kaydet ile kaydedilen hastane, servis, hemşire listesi ve mesai çizelgesi bu satıra yazılır
+const PROFILE = /*SAVED_DATA_START*/null/*SAVED_DATA_END*/;
+
+//SOLVER_START
+// Kurallar (önem sırasıyla):
+//  1. Kadro TAM OLARAK günlük nöbetçi sayısı kadardır: her gün gündüz (08-16) ve gece (16-08) diliminde ne eksik ne fazla kişi olur.
+//     24 her iki dilimi, 8 yalnız gündüzü, 16 yalnız geceyi doldurur. Elle girilen değerler de sayılır.
+//  2. Aynı kişiye iki nöbet arasında en az 2 gün dinlenme (nöbet günleri farkı >= 3).
+//  3. Hiçbir kişide 4 günden uzun boşluk olmaz. x günleri de boş sayılır (yalnız x'lerin kendisi 4 günden uzunsa kaçınılmazdır).
+//  4. Toplam saat kadrodan geldiği için sabittir; kimse boşuna fazla yazılmaz. "Ekstra" kişi tam gereken saat kadar çalışır,
+//     diğerlerinin saati olabildiğince eşit ve gereken süreye olabildiğince yakın olur.
+//  "Hafta içi 8" kişilerinin hücreleri dışarıdan sabit olarak verilir (wk): kadroya sayılırlar, kurallara tabi değildirler.
+function solveSchedule(manual, days, opts){
+ opts = opts || {};
+ const n = manual.length, D = days;
+ const N = Math.max(1, Math.floor(opts.perDay || 2));
+ const extra = opts.extra || manual.map(()=>false);
+ const wk = opts.wk || manual.map(()=>false);
+ // Önceki ay sonundaki boş gün sayısı (bilinmiyorsa -1): son nöbet ayın -p. gününde sayılır
+ const pv = Int16Array.from(manual.map((_,i)=>{ const p = opts.prev && opts.prev[i]; return (typeof p==='number' && p>=0) ? Math.min(Math.floor(p),60) : -1; }));
+ const req = opts.req || 0;
+ const budget = opts.budgetMs || 2500;
+ const now = () => (typeof performance!=="undefined" ? performance.now() : Date.now());
+ let seed = (opts.seed!==undefined ? opts.seed : Math.floor(Math.random()*4294967296)) >>> 0;
+ const rnd = () => {
+  seed = (seed + 0x6D2B79F5) >>> 0;
+  let t = seed;
+  t = Math.imul(t ^ (t>>>15), t | 1);
+  t ^= t + Math.imul(t ^ (t>>>7), t | 61);
+  return ((t ^ (t>>>14)) >>> 0) / 4294967296;
+ };
+ const only24 = !!opts.only24;   // true: otomatik nöbetlerin hepsi 24 olur (8/16 yalnız elle girilenlerin tamamlayıcısı olarak çıkar)
+ const WCOV=150000, WDEF=100000, WREST=300000, WGAP=250000, WEX=15000, WEQ=(only24?1000:20);
+
+ // Ön hazırlık
+ const H0=[], mask=[], isX=[], externalH=new Float64Array(n);
+ const c24=new Int16Array(D+2), c16=new Int16Array(D+2), c8=new Int16Array(D+2);
+ for(let i=0;i<n;i++){
+  const h=new Int16Array(D+2), m=new Uint8Array(D+2), x=new Uint8Array(D+2);
+  for(let d=1; d<=D; d++){
+   const v = manual[i][d];
+   if(v===undefined || v==="") continue;
+   m[d]=1;
+   if(v==="x" || v==="Yİ" || v==="R" || v==="+8") {
+    if(v==="+8") externalH[i]+=8;
+    if(v==="x") x[d]=1;
+   } else { h[d]=Number(v); if(h[d]===24) c24[d]++; else if(h[d]===16) c16[d]++; else if(h[d]===8) c8[d]++; }
+  }
+  H0.push(h); mask.push(m); isX.push(x);
+ }
+ const act = [];
+ for(let i=0;i<n;i++) if(!wk[i]) act.push(i);
+ const nA = act.length;
+
+ // Gün başına kalan ihtiyaç (sabit hücreler sayıldıktan sonra)
+ const needD=new Int16Array(D+2), needN=new Int16Array(D+2);
+ let Tmin=0;
+ for(let d=1; d<=D; d++){
+  needD[d] = Math.max(0, N - c24[d] - c8[d]);
+  needN[d] = Math.max(0, N - c24[d] - c16[d]);
+  Tmin += 8*needD[d] + 16*needN[d];
+ }
+ let fixedAct=0;
+ for(const i of act) {
+  fixedAct += externalH[i];
+  for(let d=1; d<=D; d++) fixedAct += H0[i][d];
+ }
+
+ const targets = opts.targets || manual.map(()=>req);
+ let nNon=0, sumEx=0, sumTargetNon=0;
+ for(const i of act){
+  if(extra[i]) sumEx += targets[i];
+  else { nNon++; sumTargetNon += targets[i]; }
+ }
+ const commonDelta = nNon>0 ? (fixedAct + Tmin - sumEx - sumTargetNon)/nNon : 0;
+ const tEq = nNon>0 ? sumTargetNon/nNon + commonDelta : 0;
+ const tg = new Float64Array(n);
+ for(let i=0;i<n;i++) tg[i] = Math.max(0, extra[i] ? targets[i] : targets[i]+commonDelta);
+ const totalTg = act.reduce((s,i)=>s+tg[i],0);
+
+ // Eşitlik için alt sınır (erken durdurma)
+ let lb = 0;
+ if(nNon>0 && !only24){
+  const units = Math.round(tEq*nNon/8);
+  const q = Math.floor(units/nNon), r = units - q*nNon;
+  for(let k=0;k<nNon;k++){ const hh=(k<r?q+1:q)*8; lb += WEQ*(hh-tEq)*(hh-tEq); }
+ }
+
+ // ---------- Başlangıç çözümü (açgözlü) ----------
+ function greedy(){
+  const H = H0.map(a=>Int16Array.from(a));
+  const hrs = new Float64Array(n), last = new Int16Array(n);
+  for(const i of act){ let s=externalH[i], l=0; for(let d=1; d<=D; d++){ s+=H[i][d]; } hrs[i]=s; }
+  const hasL = new Uint8Array(n);
+  for(const i of act) if(pv[i]>=0){ last[i]=-pv[i]; hasL[i]=1; }
+  // sabit hücrelerin son günü takibi için ileriye bakış
+  const nextFix = act.map(i=>{
+   const nx = new Int16Array(D+2); let nxt=9999;
+   for(let d=D; d>=1; d--){ nx[d] = nxt===9999 ? 99 : nxt-d; if(H0[i][d]>0) nxt=d; }
+   return nx;
+  });
+  const lastFix = new Int16Array(n);
+  for(let d=1; d<=D; d++){
+   const pieces=[];
+   const p24 = Math.min(needD[d], needN[d]);
+   for(let k=0;k<p24;k++) pieces.push(24);
+   for(let k=0;k<needD[d]-p24;k++) pieces.push(8);
+   for(let k=0;k<needN[d]-p24;k++) pieces.push(16);
+   const taken = new Uint8Array(n);
+   for(const i of act) if(H[i][d]>0 || mask[i][d]) taken[i]=1;
+   for(const s of pieces){
+    let best=-1, bs=Infinity;
+    for(let a=0;a<nA;a++){
+     const i=act[a];
+     if(taken[i]) continue;
+     const l = last[i];
+     const b = d-1-l;
+     let sc = 0;
+     if(hasL[i] && b<2) sc += (2-b)*1e6;
+     const nm = nextFix[a][d];
+     if(nm<3) sc += (3-nm)*1e6;
+     if(b>=4) sc -= 200000; else if(b===3) sc -= 3000;
+     sc += (hrs[i] - tg[i]*d/D)/8*1000;
+     if(hrs[i]+s > tg[i]) sc += (hrs[i]+s-tg[i])/8*20000;
+     sc += rnd()*600;
+     if(sc<bs){ bs=sc; best=i; }
+    }
+    if(best>=0){ H[best][d]=s; hrs[best]+=s; taken[best]=1; }
+   }
+   for(const i of act) if(H[i][d]>0){ last[i]=d; hasL[i]=1; }
+  }
+  return H;
+ }
+
+ // ---------- Benzetimli tavlama ----------
+ function runOnce(iters, T0, T1){
+  const H = greedy();
+  const hrs = new Int32Array(n);
+  for(let i=0;i<n;i++){ let s=0; for(let d=1; d<=D; d++) s+=H[i][d]; hrs[i]=s; }
+  const k24=Int16Array.from(c24), k16=Int16Array.from(c16), k8=Int16Array.from(c8);
+  // greedy'nin eklediği hücreleri sayıma kat
+  for(const i of act) for(let d=1; d<=D; d++){
+   if(!mask[i][d]){ const v=H[i][d]; if(v===24)k24[d]++; else if(v===16)k16[d]++; else if(v===8)k8[d]++; }
+  }
+  const covCost = d => {
+   const s8 = Math.abs(N-(k24[d]+k8[d])), s16 = Math.abs(N-(k24[d]+k16[d]));
+   return WCOV*(8*s8+16*s16);
+  };
+  const nurseCost = i => {
+   const h=H[i], xm=isX[i];
+   let cost=0, lastS=0, blank=0, xr=0, xmax=0, hasLS=false;
+   if(pv[i]>=0){ lastS=-pv[i]; hasLS=true; blank=pv[i]; xr=pv[i]; xmax=pv[i]; }   // önceki ay sonundaki boş günler
+   for(let d=1; d<=D; d++){
+    if(h[d]>0){
+     if(hasLS && d-lastS<3) cost += (3-(d-lastS))*WREST;
+     const al = xmax>4 ? xmax : 4;
+     if(blank>al) cost += (blank-al)*WGAP;
+     lastS=d; hasLS=true; blank=0; xr=0; xmax=0;
+    } else {
+     blank++;
+     if(xm[d]){ xr++; if(xr>xmax) xmax=xr; } else xr=0;
+    }
+   }
+   const al = xmax>4 ? xmax : 4;
+   if(blank>al) cost += (blank-al)*WGAP;
+   const hh = hrs[i];
+   if(hh<targets[i]) cost += WDEF*(targets[i]-hh);
+   if(extra[i]) cost += WEX*Math.abs(hh-targets[i]);
+   else { const a=hh-tg[i]; cost += WEQ*a*a; }
+   return cost;
+  };
+  const cost = new Float64Array(n), cov = new Float64Array(D+2);
+  let cur = 0;
+  for(const i of act){ cost[i]=nurseCost(i); cur+=cost[i]; }
+  for(let d=1; d<=D; d++){ cov[d]=covCost(d); cur+=cov[d]; }
+  let best = cur, bestH = H.map(a=>Int16Array.from(a));
+  if(nA===0) return {cost:cur, H:bestH};
+
+  // geri alma kayıtları
+  const uI=new Int16Array(16), uD=new Int16Array(16), uV=new Int16Array(16); let ul=0;
+  const tI=new Int16Array(8); let tl=0;
+  const tD=new Int16Array(8); let dl=0;
+  const touchN = i => { for(let k=0;k<tl;k++) if(tI[k]===i) return; tI[tl++]=i; };
+  const touchD = d => { for(let k=0;k<dl;k++) if(tD[k]===d) return; tD[dl++]=d; };
+  const cnt = (d,v,s) => { if(v===24)k24[d]+=s; else if(v===16)k16[d]+=s; else if(v===8)k8[d]+=s; };
+  const put = (i,d,v) => {
+   const o=H[i][d]; if(o===v) return;
+   uI[ul]=i; uD[ul]=d; uV[ul]=o; ul++;
+   cnt(d,o,-1); cnt(d,v,1); hrs[i]+=v-o; H[i][d]=v;
+   touchN(i); touchD(d);
+  };
+  const revert = () => {
+   for(let k=ul-1;k>=0;k--){
+    const i=uI[k], d=uD[k], o=uV[k], v=H[i][d];
+    cnt(d,v,-1); cnt(d,o,1); hrs[i]+=o-v; H[i][d]=o;
+   }
+  };
+  const VALS=[0,8,16,24];
+  const nc=new Float64Array(8), ndc=new Float64Array(8);
+  for(let it=0; it<iters; it++){
+   const Tm = T0*Math.pow(T1/T0, it/iters);
+   ul=0; tl=0; dl=0;
+   let r = rnd();
+   if(only24 && r>=0.85) r = 0.25 + (r-0.85)*2;   // 24 modunda böl/birleştir hamlesi kullanılmaz
+   let ok=false;
+   if(r<0.0){                       // tek hücre değiştir
+    const i=act[(rnd()*nA)|0], d=1+((rnd()*D)|0);
+    if(mask[i][d]) continue;
+    const cv=H[i][d]; let v=VALS[(rnd()*4)|0];
+    if(v===cv) continue;
+    put(i,d,v); ok=true;
+   } else if(r<0.25){                // aynı gün iki kişinin değerini değiş tokuş et
+    const d=1+((rnd()*D)|0), i=act[(rnd()*nA)|0], j=act[(rnd()*nA)|0];
+    if(i===j||mask[i][d]||mask[j][d]||H[i][d]===H[j][d]) continue;
+    const a=H[i][d], b=H[j][d]; put(i,d,b); put(j,d,a); ok=true;
+   } else if(r<0.25){                // nöbeti başka güne kaydır
+    const i=act[(rnd()*nA)|0], d1=1+((rnd()*D)|0);
+    if(mask[i][d1]||H[i][d1]===0) continue;
+    const k=1+((rnd()*4)|0), d2 = rnd()<0.5 ? d1-k : d1+k;
+    if(d2<1||d2>D||mask[i][d2]||H[i][d2]!==0) continue;
+    const v=H[i][d1]; put(i,d1,0); put(i,d2,v); ok=true;
+   } else if(r<0.55){                // nöbeti aynı gün başkasına ver
+    const i=act[(rnd()*nA)|0], j=act[(rnd()*nA)|0], d=1+((rnd()*D)|0);
+    if(i===j||mask[i][d]||mask[j][d]||H[i][d]===0||H[j][d]!==0) continue;
+    const v=H[i][d]; put(i,d,0); put(j,d,v); ok=true;
+   } else if(r<0.85){                // iki kişi farklı günlerdeki nöbetlerini değiş tokuş etsin
+    const i=act[(rnd()*nA)|0], j=act[(rnd()*nA)|0];
+    const d1=1+((rnd()*D)|0); const k=1+((rnd()*5)|0), d2 = rnd()<0.5 ? d1-k : d1+k;
+    if(i===j||d2<1||d2>D) continue;
+    if(mask[i][d1]||mask[j][d2]||mask[j][d1]||mask[i][d2]) continue;
+    const a=H[i][d1], b=H[j][d2];
+    if(a===0||b===0||H[j][d1]!==0||H[i][d2]!==0) continue;
+    put(i,d1,0); put(j,d1,a); put(j,d2,0); put(i,d2,b); ok=true;
+   } else {                          // 24'ü böl (16+8) veya birleştir
+    const i=act[(rnd()*nA)|0], j=act[(rnd()*nA)|0], d=1+((rnd()*D)|0);
+    if(i===j||mask[i][d]||mask[j][d]) continue;
+    const a=H[i][d], b=H[j][d];
+    if(a===24&&b===0){ if(rnd()<0.5){ put(i,d,16); put(j,d,8);} else { put(i,d,8); put(j,d,16);} ok=true; }
+    else if((a===16&&b===8)||(a===8&&b===16)){ put(i,d,24); put(j,d,0); ok=true; }
+   }
+   if(!ok) continue;
+   let delta=0;
+   for(let k=0;k<tl;k++){ nc[k]=nurseCost(tI[k]); delta+=nc[k]-cost[tI[k]]; }
+   for(let k=0;k<dl;k++){ ndc[k]=covCost(tD[k]); delta+=ndc[k]-cov[tD[k]]; }
+   if(delta<=0 || rnd()<Math.exp(-delta/Tm)){
+    for(let k=0;k<tl;k++) cost[tI[k]]=nc[k];
+    for(let k=0;k<dl;k++) cov[tD[k]]=ndc[k];
+    cur+=delta;
+    if(cur<best-1e-9){
+     best=cur;
+     for(const q of act){ bestH[q].set(H[q]); }
+     if(best<=lb+1e-6) break;
+    }
+   } else revert();
+  }
+  return {cost:best, H:bestH};
+ }
+
+ const t0 = now();
+ let bestSol = null;
+ const iters = opts.iters || 300000;
+ const T0 = opts.T0 || 25000, T1 = opts.T1 || 120;
+ let runs = 0;
+ while(true){
+  const sol = runOnce(iters, T0, T1); runs++;
+  if(!bestSol || sol.cost<bestSol.cost) bestSol = sol;
+  if(bestSol.cost<=lb+1e-6 || nA===0) break;
+  if(now()-t0 > budget) break;
+ }
+ const auto = Array.from({length:n},()=>({}));
+ for(const i of act) for(let d=1; d<=D; d++){
+  if(!mask[i][d] && bestSol.H[i][d]>0) auto[i][d] = String(bestSol.H[i][d]);
+ }
+ return {auto, cost:bestSol.cost, lb, runs};
+}
+
+// Kadro kontrolü: gündüz (08-16) veya gece (16-08) diliminde kişi sayısı günlük sayıdan az (short) ya da fazla (over) olan günler
+function coverageGaps(cellsArr, days, perDay){
+ const short=[], over=[];
+ for(let d=1; d<=days; d++){
+  let a24=0,a16=0,a8=0;
+  cellsArr.forEach(c=>{ const v=c[d]; if(v==="24")a24++; else if(v==="16")a16++; else if(v==="8")a8++; });
+  const day=a24+a8, night=a24+a16;
+  if(day<perDay || night<perDay) short.push(d);
+  if(day>perDay || night>perDay) over.push(d);
+ }
+ return {short, over};
+}
+
+// Çizelgedeki kural ihlallerini bulur: en az 2 gün dinlenme ve en fazla 4 gün boşluk (x günleri de boş sayılır).
+// skip: kurallardan muaf satırlar (hafta içi 8 kişileri)
+// prev: her kişinin önceki ay sonundaki boş gün sayısı (null = bilinmiyor)
+function analyzeSchedule(cellsArr, days, skip, prev){
+ const isShift = v => v==="8"||v==="16"||v==="24";
+ const rest=[], gap=[], forced=[];
+ cellsArr.forEach((c,i)=>{
+  if(skip && skip[i]) return;
+  const pr = prev ? prev[i] : null;
+  const p = (typeof pr==="number" && pr>=0) ? pr : null;
+  const ds=[];
+  for(let d=1; d<=days; d++) if(isShift(c[d])) ds.push(d);
+  const check = (a,b) => {           // a ve b arası boş günler (a=0: ay başı, b=days+1: ay sonu)
+   const lead = (a===0 && p!==null) ? p : 0;     // ay başında önceki ayın boş günleri de eklenir
+   const L = b-a-1+lead;
+   let xr=lead, xmax=lead;
+   for(let d=a+1; d<b; d++){ if(c[d]==="x"){ xr++; if(xr>xmax) xmax=xr; } else xr=0; }
+   const al = Math.max(4, xmax);
+   if(L>al) gap.push({i, a, b, rest:L, prev:lead});
+   else if(L>4) forced.push({i, a, b, rest:L, prev:lead});
+  };
+  if(!ds.length){ check(0, days+1); return; }
+  if(p!==null && ds[0]-1+p<2) rest.push({i, a:0, b:ds[0], rest:ds[0]-1+p, prev:p});
+  check(0, ds[0]);
+  for(let j=1; j<ds.length; j++){
+   const a=ds[j-1], b=ds[j];
+   if(b-a<3) rest.push({i, a, b, rest:b-a-1});
+   check(a,b);
+  }
+  check(ds[ds.length-1], days+1);
+ });
+ return {rest, gap, forced};
+}
+//SOLVER_END
+
+//XLSX_START
+// Kütüphanesiz, gerçek .xlsx (Office Open XML) üretici
+function buildXlsx(o){
+ const enc = new TextEncoder();
+ const MONTHS = ["OCAK","ŞUBAT","MART","NİSAN","MAYIS","HAZİRAN","TEMMUZ","AĞUSTOS","EYLÜL","EKİM","KASIM","ARALIK"];
+ const DN = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"];
+ const isShift = v => v==="8"||v==="16"||v==="24";
+ const esc = s => String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g,"")
+   .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+ const col = n => { let s=""; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=Math.floor((n-1)/26);} return s; };
+ const up = s => String(s).toLocaleUpperCase("tr-TR");
+
+ const D = o.days, req = o.req||0;
+ const lastDayC = 2+D, totC = lastDayC+1, ovC = lastDayC+2, cntC = lastDayC+3;
+ const str = (r,c,t,s) => `<c r="${col(c)}${r}" s="${s}" t="inlineStr"><is><t xml:space="preserve">${esc(t)}</t></is></c>`;
+ const num = (r,c,v,s) => `<c r="${col(c)}${r}" s="${s}"><v>${v}</v></c>`;
+ const blank = (r,c,s) => `<c r="${col(c)}${r}" s="${s}"/>`;
+ const fml = (r,c,f,v,s) => `<c r="${col(c)}${r}" s="${s}"><f>${f}</f><v>${v}</v></c>`;
+
+ let R = 0;
+ const out = [], merges = [];
+ const pushRow = (r,ht,cells) => out.push(`<row r="${r}"${ht?` ht="${ht}" customHeight="1"`:""}>${cells.join("")}</row>`);
+ const mergeFull = r => merges.push(`A${r}:${col(cntC)}${r}`);
+
+ // Başlık satırları
+ let r = ++R;
+ pushRow(r,30,[str(r,1,up(o.hospital||""),1)]); mergeFull(r);
+ r = ++R;
+ pushRow(r,22,[str(r,1,o.service ? "SERVİS: "+up(o.service) : "",2)]); mergeFull(r);
+ r = ++R;
+ pushRow(r,22,[str(r,1,MONTHS[o.month]+" "+o.year+" AYLIK NÖBET ÇİZELGESİ",2)]); mergeFull(r);
+ r = ++R;
+ pushRow(r,20,[str(r,1,"Çalışılması gereken süre: "+req+" saat ("+o.weekdays+" iş günü × 8 saat)",14)]); mergeFull(r);
+ r = ++R;
+ pushRow(r,8,[]);
+
+ // Tablo başlığı (2 satır)
+ const h1 = ++R, h2 = ++R;
+ let c1 = [str(h1,1,"S.NO",4), str(h1,2,"ADI SOYADI",4)];
+ let c2 = [blank(h2,1,4), blank(h2,2,4)];
+ for(let d=1; d<=D; d++){
+  const dow = new Date(o.year,o.month,d).getDay();
+  const wk = dow===0||dow===6;
+  c1.push(num(h1,2+d,d,wk?5:4));
+  c2.push(str(h2,2+d,DN[dow],wk?5:4));
+ }
+ c1.push(str(h1,totC,"TOPLAM SAAT",4), str(h1,ovC,"FAZLA MESAİ",4), str(h1,cntC,"NÖBET SAYISI",4));
+ c2.push(blank(h2,totC,4), blank(h2,ovC,4), blank(h2,cntC,4));
+ pushRow(h1,20,c1); pushRow(h2,20,c2);
+ merges.push(`A${h1}:A${h2}`,`B${h1}:B${h2}`,
+  `${col(totC)}${h1}:${col(totC)}${h2}`,`${col(ovC)}${h1}:${col(ovC)}${h2}`,`${col(cntC)}${h1}:${col(cntC)}${h2}`);
+
+ // Hemşire satırları
+ const first = R+1;
+ o.nurses.forEach((n,i)=>{
+  const rr = ++R;
+  let sum = 0, cnt = 0;
+  const cells = [num(rr,1,i+1,7), str(rr,2,n.name||"",6)];
+  for(let d=1; d<=D; d++){
+   const dow = new Date(o.year,o.month,d).getDay();
+   const wk = dow===0||dow===6;
+   const v = n.cells[d];
+   if(isShift(v)){ cells.push(num(rr,2+d,Number(v),wk?9:8)); sum+=Number(v); if(v!=="8") cnt++; }
+   else if(v==="+8"){ cells.push(str(rr,2+d,"+8",10)); sum+=8; }
+   else if(v==="x" || v==="Yİ" || v==="R"){ cells.push(str(rr,2+d,v==="x"?"X":v,10)); }
+   else cells.push(blank(rr,2+d,wk?9:8));
+  }
+  const rng = `${col(3)}${rr}:${col(lastDayC)}${rr}`;
+  cells.push(fml(rr,totC,`SUM(${rng})+COUNTIF(${rng},\"+8\")*8`,sum,11),
+             fml(rr,ovC,`${col(totC)}${rr}-${(o.nurses[i].targetHours??req)}`,sum-(o.nurses[i].targetHours??req),13),
+             fml(rr,cntC,`COUNTIF(${rng},\">8\")`,cnt,11));
+  pushRow(rr,20,cells);
+ });
+
+ // Açıklama ve tarih
+ r = ++R; pushRow(r,8,[]);
+ r = ++R;
+ pushRow(r,16,[str(r,1,"8 / 16 / 24 = nöbet saati     +8 = başka görevlendirme (+8 saat, kadroya sayılmaz)     Yİ = hafta içi yıllık izin     R = hafta içi rapor     X = nöbet yazılmayan gün     Koyu renkli sütunlar = hafta sonu     Fazla mesai = toplam saat - gereken süre (eksi değer = eksik mesai)",3)]); mergeFull(r);
+ r = ++R;
+ const now = o.now || new Date();
+ pushRow(r,16,[str(r,1,"Düzenleme tarihi: "+now.toLocaleDateString("tr-TR"),3)]); mergeFull(r);
+
+ // İmza alanı
+ r = ++R; pushRow(r,38,[]);
+ r = ++R;
+ const w = cntC-1, third = Math.floor(w/3), zw = Math.max(3, third-2);
+ const labels = ["Hazırlayan","Servis Sorumlu Hemşiresi","Başhemşire"];
+ const sig = [];
+ labels.forEach((lb,k)=>{
+  const s = 2 + k*third;
+  for(let c=s; c<s+zw; c++) sig.push(c===s ? str(r,c,lb,12) : blank(r,c,12));
+  merges.push(`${col(s)}${r}:${col(s+zw-1)}${r}`);
+ });
+ pushRow(r,22,sig);
+ const lastRow = R;
+
+ const cols = `<cols><col min="1" max="1" width="6" customWidth="1"/><col min="2" max="2" width="26" customWidth="1"/>`
+  + `<col min="3" max="${lastDayC}" width="4.7" customWidth="1"/>`
+  + `<col min="${totC}" max="${totC}" width="12" customWidth="1"/><col min="${ovC}" max="${ovC}" width="13" customWidth="1"/><col min="${cntC}" max="${cntC}" width="12" customWidth="1"/></cols>`;
+
+ const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+  + `<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+  + `<sheetPr><pageSetUpPr fitToPage="1"/></sheetPr>`
+  + `<dimension ref="A1:${col(cntC)}${lastRow}"/>`
+  + `<sheetViews><sheetView showGridLines="0" workbookViewId="0"><pane xSplit="2" ySplit="${h2}" topLeftCell="C${h2+1}" activePane="bottomRight" state="frozen"/><selection pane="bottomRight" activeCell="C${first}" sqref="C${first}"/></sheetView></sheetViews>`
+  + `<sheetFormatPr defaultRowHeight="15"/>` + cols
+  + `<sheetData>${out.join("")}</sheetData>`
+  + `<mergeCells count="${merges.length}">${merges.map(m=>`<mergeCell ref="${m}"/>`).join("")}</mergeCells>`
+  + `<pageMargins left="0.3" right="0.3" top="0.5" bottom="0.6" header="0.3" footer="0.3"/>`
+  + `<pageSetup paperSize="9" orientation="landscape" fitToWidth="1" fitToHeight="0"/>`
+  + `<headerFooter><oddFooter>&amp;CSayfa &amp;P / &amp;N</oddFooter></headerFooter>`
+  + `</worksheet>`;
+
+ const font = (extra,sz,color) => `<font>${extra}<sz val="${sz}"/>${color?`<color rgb="${color}"/>`:""}<name val="Calibri"/><family val="2"/></font>`;
+ const fill = rgb => `<fill><patternFill patternType="solid"><fgColor rgb="${rgb}"/><bgColor indexed="64"/></patternFill></fill>`;
+ const bd = c => `<border><left style="thin"><color rgb="${c}"/></left><right style="thin"><color rgb="${c}"/></right><top style="thin"><color rgb="${c}"/></top><bottom style="thin"><color rgb="${c}"/></bottom><diagonal/></border>`;
+ const xf = (font,fill,border,align,fmt) => `<xf numFmtId="${fmt||0}" fontId="${font}" fillId="${fill}" borderId="${border}" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"${fmt?' applyNumberFormat="1"':''}><alignment ${align}/></xf>`;
+ const CC = `horizontal="center" vertical="center"`;
+ const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`
+  + `<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">`
+  + `<numFmts count="1"><numFmt numFmtId="164" formatCode="+0;[Red]-0;0"/></numFmts>`
+  + `<fonts count="8">`
+  + font("",11) + font("<b/>",16,"FF1F3A5F") + font("<b/>",12,"FF1F3A5F") + font("<i/>",9,"FF5B6B7C")
+  + font("<b/>",10,"FFFFFFFF") + font("<b/>",11,"FF9B1C24") + font("<b/>",11) + font("<b/>",11,"FFFFFFFF")
+  + `</fonts>`
+  + `<fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>`
+  + fill("FF1F3A5F") + fill("FF22313F") + fill("FF34475E") + fill("FFEAF0F7") + fill("FFF8D7DA") + `</fills>`
+  + `<borders count="3"><border><left/><right/><top/><bottom/><diagonal/></border>` + bd("FFB8C2CC")
+  + `<border><left/><right/><top style="thin"><color rgb="FF000000"/></top><bottom/><diagonal/></border></borders>`
+  + `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>`
+  + `<cellXfs count="15">`
+  + xf(0,0,0,`vertical="center"`)                                  // 0 varsayılan
+  + xf(1,0,0,CC)                                                   // 1 hastane adı
+  + xf(2,0,0,CC)                                                   // 2 alt başlık
+  + xf(3,0,0,`horizontal="left" vertical="center"`)                // 3 not
+  + xf(4,2,1,CC+` wrapText="1"`)                                   // 4 başlık
+  + xf(4,3,1,CC+` wrapText="1"`)                                   // 5 başlık hafta sonu
+  + xf(0,0,1,`horizontal="left" vertical="center" indent="1"`)     // 6 ad soyad
+  + xf(0,0,1,CC)                                                   // 7 sıra no
+  + xf(6,0,1,CC)                                                   // 8 gün
+  + xf(7,4,1,CC)                                                   // 9 gün hafta sonu
+  + xf(5,6,1,CC)                                                   // 10 x
+  + xf(6,5,1,CC)                                                   // 11 toplam
+  + xf(6,0,2,CC)                                                   // 12 imza
+  + xf(6,5,1,CC,164)                                               // 13 fazla mesai (+/-)
+  + xf(6,0,0,CC)                                                   // 14 gereken süre
+  + `</cellXfs>`
+  + `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>`
+  + `</styleSheet>`;
+
+ const NS = `xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"`;
+ const REL = `http://schemas.openxmlformats.org/officeDocument/2006/relationships`;
+ const hdr = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>`;
+ const files = [
+  {name:"[Content_Types].xml", text: hdr+`<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`},
+  {name:"_rels/.rels", text: hdr+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/officeDocument" Target="xl/workbook.xml"/></Relationships>`},
+  {name:"xl/workbook.xml", text: hdr+`<workbook ${NS}><bookViews><workbookView/></bookViews><sheets><sheet name="Nöbet Çizelgesi" sheetId="1" r:id="rId1"/></sheets><calcPr calcId="191029" fullCalcOnLoad="1"/></workbook>`},
+  {name:"xl/_rels/workbook.xml.rels", text: hdr+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${REL}/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="${REL}/styles" Target="styles.xml"/></Relationships>`},
+  {name:"xl/styles.xml", text: styles},
+  {name:"xl/worksheets/sheet1.xml", text: sheet}
+ ];
+
+ // ZIP (sıkıştırmasız)
+ const table = new Uint32Array(256);
+ for(let i=0;i<256;i++){ let c=i; for(let k=0;k<8;k++) c = c&1 ? 0xEDB88320^(c>>>1) : c>>>1; table[i]=c>>>0; }
+ const crc32 = b => { let c=0xFFFFFFFF; for(let i=0;i<b.length;i++) c = table[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; };
+ const chunks = [], central = [];
+ let offset = 0;
+ for(const f of files){
+  const nameB = enc.encode(f.name), data = enc.encode(f.text), crc = crc32(data);
+  const lh = new Uint8Array(30+nameB.length), lv = new DataView(lh.buffer);
+  lv.setUint32(0,0x04034b50,true); lv.setUint16(4,20,true); lv.setUint16(6,0x0800,true);
+  lv.setUint16(8,0,true); lv.setUint16(10,0,true); lv.setUint16(12,0x21,true);
+  lv.setUint32(14,crc,true); lv.setUint32(18,data.length,true); lv.setUint32(22,data.length,true);
+  lv.setUint16(26,nameB.length,true); lv.setUint16(28,0,true); lh.set(nameB,30);
+  const ch = new Uint8Array(46+nameB.length), cv = new DataView(ch.buffer);
+  cv.setUint32(0,0x02014b50,true); cv.setUint16(4,20,true); cv.setUint16(6,20,true); cv.setUint16(8,0x0800,true);
+  cv.setUint16(10,0,true); cv.setUint16(12,0,true); cv.setUint16(14,0x21,true);
+  cv.setUint32(16,crc,true); cv.setUint32(20,data.length,true); cv.setUint32(24,data.length,true);
+  cv.setUint16(28,nameB.length,true); cv.setUint32(42,offset,true); ch.set(nameB,46);
+  chunks.push(lh,data); central.push(ch);
+  offset += lh.length + data.length;
+ }
+ let cdSize = 0; for(const c of central) cdSize += c.length;
+ const end = new Uint8Array(22), ev = new DataView(end.buffer);
+ ev.setUint32(0,0x06054b50,true); ev.setUint16(8,files.length,true); ev.setUint16(10,files.length,true);
+ ev.setUint32(12,cdSize,true); ev.setUint32(16,offset,true);
+ const all = chunks.concat(central,[end]);
+ let total = 0; for(const c of all) total += c.length;
+ const res = new Uint8Array(total); let p = 0;
+ for(const c of all){ res.set(c,p); p += c.length; }
+ return res;
+}
+//XLSX_END
+
+const MONTHS_TR = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+const dayNames = ["Paz","Pzt","Sal","Çar","Per","Cum","Cmt"];
+const isShift = v => v==="8"||v==="16"||v==="24";
+const $ = id => document.getElementById(id);
+const newNurse = name => ({name, cells:{}, auto:{}, extra:false, wk:false, prev:null});
+// Önceki ay sonundaki boş gün sayısı: boş/geçersiz = null (bilinmiyor)
+function normPrev(v){ if(v===null||v===undefined) return null; const t=String(v).trim(); if(t===""||isNaN(Number(t))||Number(t)<0) return null; return Math.min(60, Math.floor(Number(t))); }
+
+let nurses = Array.from({length:10},(_,i)=>newNurse("Hemşire "+(i+1)));
+let days = 30, month = 10, year = 2026;
+let shown = {m:10, y:2026, d:30};   // tabloda şu an gösterilen ay (render ile güncellenir)
+let only24 = false;   // son kullanılan oluşturma modu (24 saatlik mı)
+
+if(PROFILE){
+ if(PROFILE.hospital) $("hospital").value = PROFILE.hospital;
+ if(PROFILE.service) $("service").value = PROFILE.service;
+ if(PROFILE.month!==undefined) $("month").value = PROFILE.month;
+ if(PROFILE.year!==undefined) $("year").value = PROFILE.year;
+ if(PROFILE.holidays!==undefined) $("holidays").value = PROFILE.holidays;
+ if(PROFILE.perDay!==undefined) $("perDay").value = PROFILE.perDay;
+ if(PROFILE.only24!==undefined) only24 = !!PROFILE.only24;
+ if(Array.isArray(PROFILE.nurses) && PROFILE.nurses.length>=2){
+  nurses = PROFILE.nurses.map(x=> typeof x==="string" ? newNurse(x) : {
+   name:String(x.name), extra:!!x.extra, wk:!!x.wk, cells:x.cells||{}, auto:x.auto||{}, prev:normPrev(x.prev)
+  });
+ }
+}
+
+function dateInfo(){
+ month = Number($("month").value);
+ year = Number($("year").value);
+ days = new Date(year, month+1, 0).getDate();
+}
+
+// Ayın çalışılması gereken süresi: hafta içi her gün 8 saat
+function requiredInfo(){
+ dateInfo();
+ let wd = 0;
+ for(let d=1; d<=days; d++){ const dow=new Date(year,month,d).getDay(); if(dow!==0 && dow!==6) wd++; }
+ const hol = Math.max(0, Math.floor(Number($("holidays").value)||0));
+ wd = Math.max(0, wd-hol);
+ return {weekdays:wd, hours:wd*8};
+}
+
+function nurseRequiredHours(n){
+ const base = requiredInfo().hours;
+ let leaveDays = 0;
+ for(let d=1; d<=days; d++){
+  const dow = new Date(year,month,d).getDay();
+  if(dow!==0 && dow!==6 && (n.cells[d]==="Yİ" || n.cells[d]==="R")) leaveDays++;
+ }
+ return Math.max(0, base - leaveDays*8);
+}
+
+function getPerDay(){
+ let v = Math.floor(Number($("perDay").value));
+ if(!(v>=1)) v = 1;
+ if(v>12) v = 12;
+ return v;
+}
+
+function updateHeader(){
+ const rq = requiredInfo();
+ $("hHospital").textContent = $("hospital").value.trim().toLocaleUpperCase("tr-TR");
+ const sv = $("service").value.trim();
+ $("hService").textContent = sv ? "SERVİS: "+sv.toLocaleUpperCase("tr-TR") : "";
+ $("hMonth").textContent = MONTHS_TR[month]+" "+year+" Aylık Nöbet Çizelgesi";
+ $("hReq").textContent = "Çalışılması gereken süre: "+rq.hours+" saat ("+rq.weekdays+" iş günü × 8 saat)  |  Günlük nöbetçi: "+getPerDay()+" kişi";
+}
+
+function onReqChange(){ updateHeader(); updateSummary(); }
+
+function changeMonth(){
+ const hasData = nurses.some(n=>Object.keys(n.cells).length);
+ const nm = Number($("month").value), ny = Number($("year").value);
+ const consecutive = (shown.y*12+shown.m+1) === (ny*12+nm);   // yeni ay, gösterilen ayın hemen sonraki ayı mı
+ if(hasData && !confirm("Ay değiştirilince mevcut çizelge temizlenir."
+   + (consecutive ? " Her kişinin ay sonundaki boş gün sayısı, yeni ayın 'Önceki ay boş' kutusuna otomatik aktarılır." : " Yeni ay ardışık olmadığı için 'Önceki ay boş' değerleri de temizlenir.")
+   + " Devam edilsin mi?")) {
+  $("month").value = shown.m; $("year").value = shown.y; return;
+ }
+ let note = "";
+ if(hasData){
+  if(consecutive){
+   nurses.forEach(n=>{
+    if(n.wk){ n.prev = null; return; }
+    let last = 0;
+    for(let d=1; d<=shown.d; d++) if(isShift(n.cells[d])) last = d;
+    if(last>0) n.prev = shown.d-last;                                   // ay sonuna kadar geçen boş günler (x günleri dahil)
+    else n.prev = (n.prev===null||n.prev===undefined) ? null : n.prev+shown.d;   // ay boyunca nöbet yoksa boşluk devam eder
+   });
+   note = " Önceki ayın sonundaki boş gün sayıları otomatik aktarıldı; kontrol edip değiştirebilirsiniz.";
+  } else {
+   nurses.forEach(n=>{ n.prev = null; });
+   note = " Önceki ay boş günleri bilinmiyor; her kişi için girmeniz önerilir.";
+  }
+ }
+ dateInfo();
+ nurses.forEach(n=>{n.cells={};n.auto={};});
+ render();
+ $("status").textContent = "Yeni ay hazır."+note;
+}
+
+function setPrev(i,el){
+ const v = normPrev(el.value);
+ nurses[i].prev = v;
+ el.value = v===null ? "" : v;
+ $("status").textContent = nurses[i].name+": önceki ay sonu boş gün "+(v===null ? "girilmedi (ay başı kontrol edilmez)" : v+" olarak ayarlandı")
+   + (hasAuto() ? ". Çizelgeyi bu bilgiye göre yenilemek için OLUŞTUR'a basın." : ".");
+}
+
+function addNurse(){
+ nurses.push(newNurse("Hemşire "+(nurses.length+1)));
+ render();
+}
+
+function removeNurse(i){
+ if(nurses.length<=2){ alert("En az iki hemşire bulunmalıdır."); return; }
+ if(!confirm(nurses[i].name+" silinsin mi?")) return;
+ nurses.splice(i,1);
+ render();
+}
+
+function hasAuto(){ return nurses.some(n=>Object.keys(n.auto).length>0); }
+
+function onPerDayChange(){
+ const v = getPerDay();
+ $("perDay").value = v;
+ updateHeader();
+ if(hasAuto()){
+  generate();
+ } else {
+  $("status").textContent = "Günlük nöbetçi sayısı "+v+" olarak ayarlandı. OLUŞTUR'a basınca ayın bütün günleri bu sayıya göre düzenlenir.";
+ }
+}
+
+function toggleWk(i){
+ const n = nurses[i];
+ n.wk = !n.wk;
+ if(n.wk) n.extra = false;
+ if(hasAuto()){
+  generate();
+ } else {
+  render();
+  $("status").textContent = n.wk
+   ? n.name+" 'Hafta içi 8' olarak işaretlendi. OLUŞTUR'a basınca yalnızca hafta içi günlerde 8 saat yazılır, nöbet yazılmaz."
+   : n.name+" 'Hafta içi 8' işaretinden çıkarıldı.";
+ }
+}
+
+function toggleExtra(i){
+ const n = nurses[i];
+ n.extra = !n.extra;
+ if(n.extra) n.wk = false;
+ const rq = requiredInfo();
+ if(hasAuto()){
+  generate();
+ } else {
+  render();
+  $("status").textContent = n.extra
+   ? n.name+" ekstra olarak işaretlendi. OLUŞTUR'a basınca ay mesaisi kadar ("+rq.hours+" saat) nöbet yazılır; fazla mesai yazılmaz, eksiğe de düşmez."
+   : n.name+" ekstra işaretinden çıkarıldı.";
+ }
+}
+
+function render(){
+ dateInfo();
+ shown = {m:month, y:year, d:days};
+ updateHeader();
+ let html = "<thead><tr><th class='name'>HEMŞİRE</th>";
+ for(let d=1; d<=days; d++){
+  const dow = new Date(year,month,d).getDay();
+  html += `<th class="${dow===0||dow===6?'weekend':''}">${d}<br>${dayNames[dow]}</th>`;
+ }
+ html += "<th>TOPLAM<br>SAAT</th><th>FAZLA<br>MESAİ</th><th>NÖBET<br>SAYISI</th></tr></thead><tbody>";
+
+ nurses.forEach((n,i)=>{
+  html += `<tr class="${n.extra?'isextra':''} ${n.wk?'iswk':''}"><td class="name"><input value="${escapeHTML(n.name)}" onchange="nurses[${i}].name=this.value;updateSummary()">`
+        + `<span class="pvl noprint" title="Önceki ayın sonunda, son nöbetten bu yana kaç gün boş geçti? (Son gün nöbet tuttuysa 0)">Önceki ay boş:</span>`
+        + `<input class="prev noprint" type="number" min="0" max="60" step="1" placeholder="?" ${n.wk?'disabled':''} value="${n.prev===null||n.prev===undefined?'':n.prev}" title="Önceki ay sonunda son nöbetten bu yana geçen boş gün sayısı. Boş bırakılırsa ay başı kontrol edilmez." onchange="setPrev(${i},this)">`
+        + `<button class="ex noprint ${n.extra?'on':''}" title="Ekstra: bu kişi ayın gereken mesai süresi kadar çalışır; fazla mesai yazılmaz, eksiğe de düşmez." onclick="toggleExtra(${i})">Ekstra${n.extra?' ✓':''}</button>`
+        + `<button class="wkb noprint ${n.wk?'on':''}" title="Hafta içi 8: bu kişi yalnızca hafta içi günlerde 8 saat (mesai) çalışır, nöbet tutmaz." onclick="toggleWk(${i})">Hafta içi 8${n.wk?' ✓':''}</button>`
+        + `<button class="del noprint" title="Satırı sil" onclick="removeNurse(${i})">✕</button></td>`;
+  for(let d=1; d<=days; d++){
+   const dow = new Date(year,month,d).getDay();
+   const v = n.cells[d]||"";
+   const cls = n.auto[d] ? "auto" : (v==="x" || v==="Yİ" || v==="R" ? "off" : (v==="+8" ? "auto" : ""));
+   html += `<td class="${dow===0||dow===6?'weekend':''}"><input class="${cls}" maxlength="2" value="${escapeHTML(v)}" onchange="editCell(${i},${d},this)" title="8, 16, 24, +8, Yİ, R veya x"></td>`;
+  }
+  html += `<td class="total" id="total${i}">0</td><td class="total" id="over${i}">0</td><td class="total" id="count${i}">0</td></tr>`;
+ });
+
+ html += "</tbody>";
+ $("schedule").innerHTML = html;
+ updateSummary();
+}
+
+function escapeHTML(s){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function editCell(i,d,el){
+ const value = el.value.trim().toLowerCase();
+ if(!["","x","8","16","24","+8","yi","r"].includes(value)){
+  alert("Sadece 8, 16, 24, +8, Yİ, R veya x girilebilir.");
+  el.value = nurses[i].cells[d]||"";
+  return;
+ }
+ const stored = value==="yi" ? "Yİ" : value.toUpperCase();
+ el.value = stored;
+ if(stored==="") delete nurses[i].cells[d]; else nurses[i].cells[d]=stored;
+ delete nurses[i].auto[d];
+ el.className = (stored==="x" || stored==="Yİ" || stored==="R") ? "off" : (stored==="+8" ? "auto" : "");
+ updateSummary();
+}
+
+function hours(i){
+ let s = 0;
+ for(let d=1; d<=days; d++){ const v=nurses[i].cells[d]; if(isShift(v)) s+=Number(v); else if(v==="+8") s+=8; }
+ return s;
+}
+function shiftCount(i){
+ let c = 0;
+ for(let d=1; d<=days; d++){ const v=nurses[i].cells[d]; if(v==="16"||v==="24") c++; }   // 8 saatlik mesailer nöbet sayısına dahil değil
+ return c;
+}
+function signed(v){ return (v>0?"+":"")+v; }
+
+function updateSummary(){
+ const rq = requiredInfo();
+ let html = "";
+ nurses.forEach((n,i)=>{
+  const h = hours(i), target = nurseRequiredHours(n), diff = h - target;
+  html += `<span>${escapeHTML(n.name)}${n.extra?' (ekstra)':''}${n.wk?' (hafta içi 8)':''}: <b>${h} saat</b> (${signed(diff)}) · <b>${shiftCount(i)}</b> nöbet</span>`;
+  const el = $("total"+i); if(el) el.textContent = h;
+  const eo = $("over"+i);
+  if(eo){ eo.textContent = signed(diff); eo.style.color = diff<0 ? "#b83b42" : (diff>0 ? "#1d7a4f" : ""); }
+  const ec = $("count"+i); if(ec) ec.textContent = shiftCount(i);
+ });
+ $("summary").innerHTML = html;
+}
+
+function generate(flag24){
+ if(flag24!==undefined) only24 = !!flag24;   // argümansız çağrılar (ekstra, hafta içi 8 vb.) son modu korur
+ $("btnGen").disabled = true; $("btn24").disabled = true;
+ $("status").textContent = (only24 ? "24 saatlik nöbet çizelgesi" : "Nöbet çizelgesi")+" hesaplanıyor, lütfen bekleyin...";
+ setTimeout(()=>{ try{ doGenerate(); } finally { $("btnGen").disabled = false; $("btn24").disabled = false; } }, 40);
+}
+
+function doGenerate(){
+ dateInfo();
+ const rq = requiredInfo();
+ const N = getPerDay();
+ // Önceki otomatik nöbetleri sil, elle girilenleri koru
+ nurses.forEach(n=>{
+  Object.keys(n.auto).forEach(d=>delete n.cells[d]);
+  n.auto = {};
+ });
+ const msgs = [];
+
+ // Elle girilenler günlük kadroyu aşıyor mu
+ for(let d=1; d<=days; d++){
+  let a24=0,a16=0,a8=0;
+  nurses.forEach(n=>{ if(n.wk) return; const v=n.cells[d]; if(v==="24")a24++; else if(v==="16")a16++; else if(v==="8")a8++; });
+  if(a24+a8>N || a24+a16>N) msgs.push("UYARI: "+d+". günde elle girilen nöbetler günlük "+N+" nöbetçi kadrosunu aşıyor.");
+ }
+
+ // "Hafta içi 8" kişileri: yalnız hafta içi günlere 8 yazılır (x günleri atlanır)
+ const wkMsgs = [];
+ nurses.forEach(n=>{
+  if(!n.wk) return;
+  let have = 0;
+  for(let d=1; d<=days; d++){ if(isShift(n.cells[d])) have += Number(n.cells[d]); else if(n.cells[d]==="+8") have += 8; }
+  const cand = [];
+  for(let d=1; d<=days; d++){
+   const dow = new Date(year,month,d).getDay();
+   if(dow!==0 && dow!==6 && n.cells[d]===undefined) cand.push(d);
+  }
+  const needDays = Math.max(0, Math.round((nurseRequiredHours(n)-have)/8));
+  cand.slice(0,needDays).forEach(d=>{ n.cells[d]="8"; n.auto[d]=true; });
+  if(cand.length<needDays) wkMsgs.push(n.name+": x girilen günler nedeniyle "+(needDays-cand.length)+" iş günü yazılamadı.");
+  else if(cand.length>needDays) wkMsgs.push(n.name+": resmi tatil düşüldüğü için ay sonundaki "+(cand.length-needDays)+" iş günü boş bırakıldı. Tatil günlerini bu satırda x ile işaretlerseniz doğru günler boş kalır.");
+ });
+
+ const manual = nurses.map(n=>Object.assign({}, n.cells));
+ const res = solveSchedule(manual, days, {
+  extra: nurses.map(n=>!!n.extra), wk: nurses.map(n=>!!n.wk), prev: nurses.map(n=>n.wk ? null : n.prev),
+  req: rq.hours, targets: nurses.map(n=>nurseRequiredHours(n)), perDay: N, budgetMs: only24 ? 3500 : 2500, only24: only24
+ });
+ nurses.forEach((n,i)=>{
+  Object.keys(res.auto[i]).forEach(d=>{ n.cells[d]=res.auto[i][d]; n.auto[d]=true; });
+ });
+ render();
+
+ // Kontroller
+ const cellsArr = nurses.map(n=>n.cells);
+ const an = analyzeSchedule(cellsArr, days, nurses.map(n=>!!n.wk), nurses.map(n=>n.prev));
+ const cov = coverageGaps(cellsArr, days, N);
+ const covBad = cov.short;
+ const defs = [], exBad = [];
+ let totNonWk = 0, cntNonWk = 0;
+ nurses.forEach((n,i)=>{
+  const h = hours(i);
+  if(!n.wk){ totNonWk += h; cntNonWk++; }
+  const target = nurseRequiredHours(n);
+  if(h<target) defs.push(n.name+": "+h+" saat yazıldı, "+(target-h)+" saat eksik");
+  if(n.extra && h>target) exBad.push(n.name+": gereken "+target+", yazılan "+h+" saat");
+ });
+
+ if(only24){
+  let c8=0, c16=0;
+  nurses.forEach(n=>{ if(n.wk) return; Object.keys(n.auto).forEach(d=>{ if(n.cells[d]==="8") c8++; else if(n.cells[d]==="16") c16++; }); });
+  msgs.push("24 saatlik mod: otomatik nöbetlerin hepsi 24 saat yazıldı."
+   + ((c8||c16) ? " Elle girilen 8/16 (veya hafta içi 8) mesailer nedeniyle tamamlayıcı olarak "+c16+" adet 16 ve "+c8+" adet 8 saat yazılması gerekti." : " Tamamlayıcı 8/16 gerekmedi."));
+ }
+ msgs.unshift((covBad.length||cov.over.length) ? "Çizelge oluşturuldu, ancak kadro bazı günlerde "+N+" kişi olamadı." : "Çizelge oluşturuldu. Her gün tam "+N+" nöbetçi var (ne eksik ne fazla).");
+ if(covBad.length) msgs.push("Kadrosu eksik kalan günler: "+covBad.join(", ")+" (çok sayıda x girilmiş olabilir).");
+ if(cov.over.length) msgs.push(N+" kişiyi aşan günler: "+cov.over.join(", ")+" (elle girilen nöbetler veya hafta içi 8 kişileri nedeniyle).");
+ if(defs.length){
+  const maxN = Math.max(1, Math.floor(totNonWk/Math.max(8,rq.hours)));
+  msgs.push("EKSİK MESAİ: Günlük kadro tam "+N+" kişi tutulduğu için toplam saat sabit ve herkesi "+rq.hours+" saate çıkarmaya yetmiyor:\n  "+defs.join("\n  ")
+   + "\n  Çözüm için nöbet tutan hemşire sayısını en fazla "+maxN+" yapın (şu an "+cntNonWk+") ya da günlük nöbetçi sayısını artırın.");
+ } else msgs.push("Hiç kimsenin mesaisi eksik değil (herkes en az "+rq.hours+" saat).");
+ if(exBad.length) msgs.push("Ekstra kişilerde ay mesaisi tam tutturulamadı:\n  "+exBad.join("\n  "));
+ wkMsgs.forEach(m=>msgs.push("Hafta içi 8 - "+m));
+ if(an.rest.length){
+  msgs.push("Dinlenme kuralı (en az 2 gün ara) ihlalleri, mecburen:\n  "
+   + an.rest.slice(0,10).map(v=> v.prev!==undefined
+     ? nurses[v.i].name+": önceki ay sonundaki "+v.prev+" boş günle birlikte "+v.b+". günde başlıyor ("+v.rest+" gün ara)"
+     : nurses[v.i].name+": "+v.a+". ve "+v.b+". gün ("+v.rest+" gün ara)").join("\n  "));
+ }
+ if(an.gap.length){
+  const lines = an.gap.slice(0,10).map(v=>{
+   const nm = nurses[v.i].name;
+   if(v.a===0 && v.b===days+1) return nm+": ay boyunca hiç nöbet yazılamadı";
+   if(v.a===0) return nm+": "+(v.prev ? "önceki ay sonundaki "+v.prev+" boş gün dahil, " : "")+"ay başından "+v.b+". güne kadar "+v.rest+" gün ara";
+   if(v.b===days+1) return nm+": "+v.a+". günden ay sonuna kadar "+v.rest+" gün ara";
+   return nm+": "+v.a+". ve "+v.b+". gün arası "+v.rest+" gün ara";
+  });
+  msgs.push("4 günden uzun ara kalan yerler (x günleri dahil) ("+an.gap.length+" adet):\n  "+lines.join("\n  ")
+   + (an.gap.length>10 ? "\n  ..." : "")
+   + "\n  Bu durum genelde hemşire sayısının günlük nöbetçi sayısına göre az olmasından kaynaklanır.");
+ } else {
+  msgs.push("Hiçbir kişide (x günleri dahil) 4 günden uzun ara yok.");
+ }
+ if(an.forced.length){
+  msgs.push("Not: Şu kişilerde girilen x günlerinin kendisi 4 günden uzun olduğu için ara kaçınılmaz:\n  "
+   + an.forced.slice(0,10).map(v=>nurses[v.i].name+" ("+v.rest+" gün)").join("\n  "));
+ }
+ const nonHs = nurses.map((n,i)=>(n.extra||n.wk)?null:hours(i)).filter(h=>h!==null);
+ if(nonHs.length) msgs.push("Ekstra ve hafta içi 8 olmayanlarda saat dağılımı: en düşük "+Math.min(...nonHs)+", en yüksek "+Math.max(...nonHs)+" saat. Gereken süre: "+rq.hours+" saat.");
+ const noPrev = nurses.filter(n=>!n.wk && n.prev===null).map(n=>n.name);
+ if(noPrev.length) msgs.push("Not: Önceki ay sonu boş gün sayısı girilmediği için ay başı geçişi kontrol edilmedi: "+(noPrev.length>4 ? noPrev.length+" kişi" : noPrev.join(", "))+".");
+ else msgs.push("Önceki ay sonundaki boşluklar dikkate alındı.");
+ $("status").textContent = msgs.join("\n");
+}
+
+function clearAuto(){
+ nurses.forEach(n=>{ Object.keys(n.auto).forEach(d=>delete n.cells[d]); n.auto={}; });
+ render();
+ $("status").textContent = "Otomatik yazılan nöbetler silindi, elle girilenler korundu.";
+}
+
+function clearSchedule(){
+ if(!confirm("Bütün nöbet hücreleri silinsin mi?")) return;
+ nurses.forEach(n=>{ n.cells={}; n.auto={}; });
+ render();
+ $("status").textContent = "Çizelge temizlendi.";
+}
+
+function saveData(){
+ try{
+  localStorage.setItem("hemsireNobet2", JSON.stringify({nurses, hospital:$("hospital").value, service:$("service").value, month:$("month").value, year:$("year").value, holidays:$("holidays").value, perDay:$("perDay").value, only24}));
+  $("status").textContent = "Çizelge bu tarayıcıya kaydedildi.";
+ }catch(e){ alert("Kaydedilemedi."); }
+}
+
+function loadData(){
+ let raw = null;
+ try{ raw = localStorage.getItem("hemsireNobet2"); }catch(e){}
+ if(!raw){ alert("Kayıt bulunamadı."); return; }
+ try{
+  const obj = JSON.parse(raw);
+  nurses = obj.nurses.map(x=>({name:String(x.name), extra:!!x.extra, wk:!!x.wk, cells:x.cells||{}, auto:x.auto||{}, prev:normPrev(x.prev)}));
+  $("hospital").value = obj.hospital||"";
+  $("service").value = obj.service||"";
+  $("month").value = obj.month;
+  $("year").value = obj.year;
+  $("holidays").value = obj.holidays||0;
+  $("perDay").value = obj.perDay||2;
+  only24 = !!obj.only24;
+  render();
+  $("status").textContent = "Kayıt yüklendi.";
+ }catch(e){ alert("Kayıt okunamadı."); }
+}
+
+function safeName(s){
+ return String(s).trim().replace(/[^\wÇĞİÖŞÜçğıöşü-]+/g,"_").replace(/^_+|_+$/g,"");
+}
+
+function download(blob, filename){
+ const url = URL.createObjectURL(blob);
+ const a = document.createElement("a");
+ a.href = url;
+ a.download = filename;
+ document.body.appendChild(a);
+ a.click();
+ a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+function exportExcel(){
+ const rq = requiredInfo();
+ const bytes = buildXlsx({
+  hospital:$("hospital").value.trim(), service:$("service").value.trim(),
+  month, year, days, nurses:nurses.map(n=>Object.assign({},n,{targetHours:nurseRequiredHours(n)})), now:new Date(), req:rq.hours, weekdays:rq.weekdays
+ });
+ const blob = new Blob([bytes],{type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+ const parts = [safeName($("hospital").value), safeName($("service").value), MONTHS_TR[month], year, "Nobet"].filter(x=>x!=="");
+ download(blob, parts.join("_")+".xlsx");
+ $("status").textContent = "Excel dosyası hazırlandı.";
+}
+
+// Hastane, servis, hemşire listesi, ekstra işaretleri ve mesai çizelgesiyle birlikte programı yeni bir HTML dosyası olarak kaydeder
+function buildSavedHTML(){
+ const profile = {
+  hospital:$("hospital").value.trim(),
+  service:$("service").value.trim(),
+  month:$("month").value,
+  year:$("year").value,
+  holidays:$("holidays").value,
+  perDay:$("perDay").value,
+  only24:only24,
+  nurses:nurses.map(n=>({name:n.name, extra:!!n.extra, wk:!!n.wk, cells:n.cells, auto:n.auto, prev:n.prev}))
+ };
+ const json = JSON.stringify(profile).replace(/</g,"\\u003c").replace(new RegExp("[\\u2028\\u2029]","g"),"");
+ const a = "/*SAVED_" + "DATA_START*/", b = "/*SAVED_" + "DATA_END*/";
+ const re = new RegExp(a.replace(/[.*+?^${}()|[\]\\\/]/g,"\\$&") + "[\\s\\S]*?" + b.replace(/[.*+?^${}()|[\]\\\/]/g,"\\$&"));
+ return ORIGINAL_HTML.replace(re, ()=>a+json+b);
+}
+
+async function saveAs(){
+ const html = buildSavedHTML();
+ const sv = safeName($("service").value);
+ const fname = "hemsire_nobet_programi"+(sv?"_"+sv:"")+".html";
+ const blob = new Blob([html],{type:"text/html;charset=utf-8"});
+ const okMsg = "Program; hastane/servis bilgisi, hemşire listesi, ekstra/hafta içi 8 işaretleri, günlük nöbetçi sayısı ve mesai çizelgesiyle birlikte kaydedildi";
+ if(window.showSaveFilePicker){
+  try{
+   const handle = await window.showSaveFilePicker({
+    suggestedName:fname, startIn:"desktop",
+    types:[{description:"HTML dosyası", accept:{"text/html":[".html"]}}]
+   });
+   const w = await handle.createWritable();
+   await w.write(blob);
+   await w.close();
+   $("status").textContent = okMsg+": "+handle.name;
+   return;
+  }catch(e){
+   if(e && e.name==="AbortError") return;
+  }
+ }
+ download(blob, fname);
+ $("status").textContent = okMsg+" ("+fname+"). Tarayıcınız konum seçtirmiyorsa dosyayı İndirilenler klasöründen Masaüstüne taşıyın.";
+}
+
+dateInfo();
+render();
+</script>
+
+<!-- Hazırlayan Bilgisi -->
+<div class="creator-signature">
+    <span class="creator-line"></span>
+    <span class="creator-label">DESIGNED & DEVELOPED BY</span>
+    <strong>ÖMER BORAN</strong>
+    <span class="creator-subtitle">Tarafından hazırlanmıştır.</span>
+</div>
+
+<style>
+.creator-signature {
+    position: fixed;
+    bottom: 15px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    padding: 10px 15px;
+    background: rgba(255, 255, 255, 0.94);
+    border-right: 3px solid #2563eb;
+    border-radius: 6px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    line-height: 1.5;
+}
+
+.creator-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.creator-signature strong {
+    font-size: 15px;
+    letter-spacing: 1.5px;
+    color: #1e3a8a;
+    font-weight: 800;
+}
+
+.creator-subtitle {
+    font-size: 10px;
+    color: #64748b;
+}
+
+@media print {
+    .creator-signature {
+        position: fixed;
+        bottom: 8mm;
+        right: 8mm;
+        box-shadow: none;
+    }
+}
+</style>
+
+</body>
+</html>
